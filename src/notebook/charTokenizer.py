@@ -9,18 +9,18 @@ class CharTokenizer:
 
     def build_vocab(self, text): return self.vocab.extend(set(text) - set(self.vocab))
 
-    def encode(self, text): return [self.vocab.index(char) if char in self.vocab else "<unk>" for char in text]
+    def encode(self, text): return [self.vocab.index(char) if char in self.vocab else self.vocab.index("<unk>") for char in text]
 
-    def __call__(self, text, truncation=True, padding='max_length', max_length=None, return_tensors=None):
+    def __call__(self, text, truncation=True, padding='max_seq_len', max_seq_len=None, return_tensors=None):
         ids = self.encode(text)
 
         # トランケーション
-        if truncation and len(ids) > max_length:
-            ids = ids[:max_length]
+        if truncation and len(ids) > max_seq_len:
+            ids = ids[:max_seq_len]
 
         # パディング
-        if padding == 'max_length':
-            ids += [self.vocab.index("<pad>")] * (max_length - len(ids))
+        if padding == 'max_seq_len':
+            ids += [self.vocab.index("<pad>")] * (max_seq_len - len(ids))
 
         output = {"input_ids": ids}
 

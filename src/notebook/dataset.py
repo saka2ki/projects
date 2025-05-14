@@ -1,15 +1,15 @@
 #%%
 from torch.utils.data import Dataset, DataLoader
-from src.notebook.charTokenizer import CharTokenizer
-import src.notebook.path as path
+from charTokenizer import CharTokenizer
+import path as path
 import json
 
 class JPNDataset(Dataset):
-    def __init__(self, path, tokenizer, max_length):
+    def __init__(self, path, tokenizer, max_seq_len):
         super().__init__()
         self.path = path
         self.tokenizer = tokenizer
-        self.max_length = max_length
+        self.max_seq_len = max_seq_len
 
         # 各行のファイル位置オフセットだけ記録（高速アクセス用）
         self.offsets = []
@@ -29,5 +29,5 @@ class JPNDataset(Dataset):
             line = f.readline()
             data = json.loads(line)
             text = data.get("text", "")
-            tokens = self.tokenizer(text, max_length=self.max_length, return_tensors="pt")
+            tokens = self.tokenizer(text, max_seq_len=self.max_seq_len, return_tensors="pt")
             return tokens["input_ids"].squeeze(0)
