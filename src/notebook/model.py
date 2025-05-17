@@ -5,7 +5,7 @@ class Decoder(nn.Module):
     def __init__(self, vocab_size, d_model, n_heads, n_layers, max_seq_len, dropout=0.1):
         super().__init__()
         self.token_emb = nn.Embedding(vocab_size, d_model)
-        self.pos_emb = nn.Parameter(torch.zeros(1, max_seq_len, d_model))
+        self.pos_emb = nn.Parameter(torch.randn(1, max_seq_len, d_model) * 0.02)
         self.dropout = nn.Dropout(dropout)
 
         self.layers = nn.ModuleList([
