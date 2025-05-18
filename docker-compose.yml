@@ -7,7 +7,7 @@ services:
     volumes:
       - /mnt/wslg:/mnt/wslg
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./app:/app
+      - .:/app
     environment:
       - DISPLAY=$DISPLAY
       - PULSE_SERVER=$PULSE_SERVER
