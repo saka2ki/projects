@@ -53,7 +53,7 @@ class Decoder(nn.Module):
             x = x + layer['mlp'](layer['ln2'](x))
             #######################################################
             x = torch.complex(x[:, 0::2, :], x[:, 1::2, :])
-            x = torch.cat([x, torch.zeros(x.shape[0], T-T//2, x.shape[2], dtype=torch.cfloat)], dim=1)
+            x = torch.cat([x, torch.zeros(x.shape[0], T-T//2, x.shape[2], dtype=torch.cfloat, device=x.device)], dim=1)
             x = torch.fft.ifft(x).real
             #######################################################
 
