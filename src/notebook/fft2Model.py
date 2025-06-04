@@ -34,63 +34,30 @@ class Decoder(nn.Module):
 
     def forward(self, x):
         B, T = x.size()
-        x = self.token_emb(x) + self.pos_emb[:,:T]
+        x = self.token_emb(x) + self.pos_emb[:, :T]
         x = self.dropout(x)
-        attn_mask = torch.triu(torch.ones(T-1, T-1, device=x.device), diagonal=1).bool()
-
-        def forward(self, x):
-    B, T, d_model = x.size()
-    x = self.token_emb(x) + self.pos_emb[:, :T]
-    x = self.dropout(x)
-
-    attn_mask = torch.triu(torch.ones(T - 1, T - 1, device=x.device), diagonal=1).bool()
-
-    for layer in self.layers:
-        # 2D FFT
-        x_fft = torch.fft.fft2(x, dim=(1, 2))
-
-        # 低周波成分1/4抽出
-        x_low = x_fft[:, :T//2, :d_model//2]
-
-        # 実部・虚部に分離
-        x_low_real = x_low.real
-        x_low_imag = x_low.imag
-
-        # そのままアテンションに通す
-        x_low_real = layer['ln1'](x_low_real)
-        attn_out_real, _ = layer['attn'](
-            x_low_real, x_low_real, x_low_real,
-            attn_mask=attn_mask,
-            need_weights=False,
-        )
-        x_low_real = x_low_real + attn_out_real
-        x_low_real = x_low_real + layer['mlp'](layer['ln2'](x_low_real))
-
-        x_low_imag = layer['ln1'](x_low_imag)
-        attn_out_imag, _ = layer['attn'](
-            x_low_imag, x_low_imag, x_low_imag,
-            attn_mask=attn_mask,
-            need_weights=False,
-        )
-        x_low_imag = x_low_imag + attn_out_imag
-        x_low_imag = x_low_imag + layer['mlp'](layer['ln2'](x_low_imag))
-
-        # 複素数に戻す
-        x_low_processed = torch.complex(x_low_real, x_low_imag)
-
-        # ゼロパディングで元のサイズに戻す
-        pad_T = T - T//2
-        pad_d = d_model - d_model//2
-        x_padded = torch.nn.functional.pad(x_low_processed, (0, pad_d, 0, pad_T))
-
-        # 逆FFTで実空間に戻す
-        x = torch.fft.ifft2(x_padded, dim=(1, 2)).real
-
-    x = self.ln_f(x)
-    logits = self.head(x)
-    return logits
-
-
+        d_model = x.size(-1)
+        attn_mask = torch.triu(torch.ones(T - 1, T - 1, device=x.device), diagonal=1).bool()
+    
+        for layer in self.layers:
+            # 実数から複素数への 2D FFT（省メモリ）
+            x = torch.fft.rfft2(x, dim=(1, 2))  # [B, T, d_model//2 + 1]
+            x = torch.cat([x.real, x.imag], dim=-1)
+    
+            x_norm = layer['ln1'](x)
+            attn_output, _ = layer['attn'](
+                x_norm, x_norm, x_norm,
+                attn_mask=attn_mask,
+                need_weights=False,
+            )
+            x = x + attn_output
+            x = x + layer['mlp'](layer['ln2'](x))
+    
+            # 複素数として結合 → 逆FFT2D
+            x_real, x_imag = attn_out.chunk(2, dim=-1)
+            x = torch.complex(x_real, x_imag)
+            x = torch.fft.irfft2(x, s=(T, d_model), dim=(1, 2))  # 実空間に戻す
+    
         x = self.ln_f(x)
         logits = self.head(x)
         return logits

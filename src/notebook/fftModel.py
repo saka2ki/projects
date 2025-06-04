@@ -40,7 +40,7 @@ class Decoder(nn.Module):
 
         for layer in self.layers:
             #######################################################
-            x = torch.fft.fft(x, dim=1)[:, :T//2]
+            x = torch.fft.rfft(x, dim=1)
             x = torch.stack((x.real, x.imag), dim=2).flatten(1,2)
             #######################################################
             x_norm = layer['ln1'](x)
@@ -53,8 +53,7 @@ class Decoder(nn.Module):
             x = x + layer['mlp'](layer['ln2'](x))
             #######################################################
             x = torch.complex(x[:, 0::2, :], x[:, 1::2, :])
-            x = torch.cat([x, torch.zeros(x.shape[0], T-T//2, x.shape[2], dtype=torch.cfloat, device=x.device)], dim=1)
-            x = torch.fft.ifft(x).real
+            x = torch.fft.irfft(x, n=T, dim=1)
             #######################################################
 
         x = self.ln_f(x)
