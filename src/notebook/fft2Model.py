@@ -37,13 +37,9 @@ class Decoder(nn.Module):
         x = self.token_emb(x) + self.pos_emb[:, :T]
         x = self.dropout(x)
         d_model = x.size(-1)
-        attn_mask = torch.triu(torch.ones(T - 1, T - 1, device=x.device), diagonal=1).bool()
+        attn_mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
     
         for layer in self.layers:
-            # 実数から複素数への 2D FFT（省メモリ）
-            x = torch.fft.rfft2(x, dim=(1, 2))  # [B, T, d_model//2 + 1]
-            x = torch.cat([x.real, x.imag], dim=-1)
-    
             x_norm = layer['ln1'](x)
             attn_output, _ = layer['attn'](
                 x_norm, x_norm, x_norm,
@@ -51,13 +47,16 @@ class Decoder(nn.Module):
                 need_weights=False,
             )
             x = x + attn_output
-            x = x + layer['mlp'](layer['ln2'](x))
-    
-            # 複素数として結合 → 逆FFT2D
-            x_real, x_imag = attn_out.chunk(2, dim=-1)
+            ############################################################
+            x = torch.fft.rfft2(x[:, :, :-2], dim=(1, 2))  # [B, T, d_model//2 + 1]
+            x = torch.cat([x.real, x.imag], dim=-1)
+            ############################################################
+            x = x + layer['mlp'](layer['ln2'](x))   
+            #############################################################
+            x_real, x_imag = x.chunk(2, dim=-1)
             x = torch.complex(x_real, x_imag)
             x = torch.fft.irfft2(x, s=(T, d_model), dim=(1, 2))  # 実空間に戻す
-    
+            #############################################################
         x = self.ln_f(x)
         logits = self.head(x)
         return logits

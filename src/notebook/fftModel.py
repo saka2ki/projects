@@ -39,10 +39,6 @@ class Decoder(nn.Module):
         attn_mask = torch.triu(torch.ones(T-1, T-1, device=x.device), diagonal=1).bool()
 
         for layer in self.layers:
-            #######################################################
-            x = torch.fft.rfft(x, dim=1)
-            x = torch.stack((x.real, x.imag), dim=2).flatten(1,2)
-            #######################################################
             x_norm = layer['ln1'](x)
             attn_output, _ = layer['attn'](
                 x_norm, x_norm, x_norm,
@@ -50,6 +46,10 @@ class Decoder(nn.Module):
                 need_weights=False,
             )
             x = x + attn_output
+            #######################################################
+            x = torch.fft.rfft(x, dim=1)
+            x = torch.stack((x.real, x.imag), dim=2).flatten(1,2)
+            #######################################################
             x = x + layer['mlp'](layer['ln2'](x))
             #######################################################
             x = torch.complex(x[:, 0::2, :], x[:, 1::2, :])
