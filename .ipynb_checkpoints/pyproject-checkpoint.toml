@@ -7,8 +7,11 @@ requires-python = ">=3.10.13"
 dependencies = [
     "accelerate>=1.6.0",
     "bitsandbytes>=0.45.5",
+    "celluloid>=0.2.0",
+    "datasets>=3.6.0",
     "huggingface-hub>=0.30.2",
     "ipywidgets>=8.1.7",
+    "jax[cuda12]>=0.5.3",
     "jupyterlab>=4.4.2",
     "jupyterlab-git>=0.51.1",
     "jupyterlab-github>=4.0.0",
@@ -16,7 +19,9 @@ dependencies = [
     "torch>=2.5.0",
     "torchaudio>=2.5.0",
     "torchvision>=0.20.0",
+    "tqdm>=4.67.1",
     "transformers>=4.51.3",
+    "wandb>=0.20.1",
     "wikiextractor",
 ]
 
@@ -28,4 +33,5 @@ find-links = [
     "https://download.pytorch.org/whl/cu126/torch",
     "https://download.pytorch.org/whl/cu126/torchvision",
     "https://download.pytorch.org/whl/cu126/torchaudio",
+    "https://storage.googleapis.com/jax-releases/jax_cuda_releases.html"
 ]
