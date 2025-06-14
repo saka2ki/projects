@@ -8,6 +8,14 @@ from jax.scipy.signal import convolve
 
 from ssm import *
 
+def log_step_initializer(dt_min=0.001, dt_max=0.1):
+    def init(key, shape):
+        return jax.random.uniform(key, shape) * (
+            np.log(dt_max) - np.log(dt_min)
+        ) + np.log(dt_min)
+
+    return init
+
 class S4Layer(nn.Module):
     N: int
     l_max: int

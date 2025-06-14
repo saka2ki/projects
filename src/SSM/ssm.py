@@ -211,3 +211,12 @@ def make_DPLR_HiPPO(N):
     P = V.conj().T @ P
     B = V.conj().T @ B
     return Lambda_real + 1j * Lambda_imag, P, B, V
+
+def cloneLayer(layer):
+    return nn.vmap(
+        layer,
+        in_axes=1,
+        out_axes=1,
+        variable_axes={"params": 1, "cache": 1, "prime": 1},
+        split_rngs={"params": True},
+    )
